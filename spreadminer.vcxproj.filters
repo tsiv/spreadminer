@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\compat">
+      <UniqueIdentifier>{68e0e4af-206d-4142-ac13-357bcbd5314f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\spreadx11">
+      <UniqueIdentifier>{d3503b96-b382-45c3-bdaf-027d50107a29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\compat\jansson">
+      <UniqueIdentifier>{e693e5df-ef2b-41aa-b661-584e991953ec}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cpu-miner.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scrypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sha2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\jansson\dump.c">
+      <Filter>Source Files\compat\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\jansson\hashtable.c">
+      <Filter>Source Files\compat\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\jansson\load.c">
+      <Filter>Source Files\compat\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\jansson\strbuffer.c">
+      <Filter>Source Files\compat\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\jansson\utf.c">
+      <Filter>Source Files\compat\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\jansson\value.c">
+      <Filter>Source Files\compat\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\gettimeofday.c">
+      <Filter>Source Files\compat</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\getopt\getopt_long.c">
+      <Filter>Source Files\compat</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cuda_util.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_blake.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_bmw512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_jh512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_quark_groestl512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_quark_keccak512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_sha256.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_skein512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_spreadx11_sign.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_x11_cubehash512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_x11_echo.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_x11_luffa512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_x11_shavite512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\cuda_x11_simd512.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="spreadx11\spreadx11.cu">
+      <Filter>Source Files\spreadx11</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="compat\inttypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\stdbool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\hashtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\jansson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\jansson_private.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\strbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\utf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\jansson\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\getopt\getopt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\sys\time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="spreadx11\bignum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
