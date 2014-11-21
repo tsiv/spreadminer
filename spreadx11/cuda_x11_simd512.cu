@@ -20,7 +20,14 @@ texture<uint4, 1, cudaReadModeElementType> texRef1D_128;
 #define C32(x)    ((uint32_t)(x ## U))
 #define T32(x) ((x) & C32(0xFFFFFFFF))
 
-#define ROTL32(x, n) __funnelshift_l( (x), (x), (n) )
+static __device__ __forceinline__ uint32_t ROTL32( uint32_t x, const int n )
+{
+#if __CUDA_ARCH__ >= 320
+    return __funnelshift_l(x, x, n);
+#else
+    return (x << n) | (x >> (32-n));
+#endif
+}
 
 __constant__  uint32_t c_perm[8][8];
 const uint32_t h_perm[8][8] = {

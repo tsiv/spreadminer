@@ -67,6 +67,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;SCRYPT_KECCAK512;SCRYPT_CHACHA;SCRYPT_CHOOSE_COMPILETIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;compat;compat\jansson;compat\getopt;..\pthreads\Pre-built.2\include;..\curl-7.29.0\include;..\OpenSSL-Win32\include;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,7 +81,7 @@
       <CInterleavedPTX>true</CInterleavedPTX>
     </CudaCompile>
     <CudaCompile>
-      <CodeGeneration>compute_50,sm_50;compute_52,sm_52</CodeGeneration>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52</CodeGeneration>
     </CudaCompile>
     <CudaCompile>
       <MaxRegCount>80</MaxRegCount>

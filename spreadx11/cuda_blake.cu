@@ -87,6 +87,7 @@ const uint64_t host_u512[16] =
 
 __forceinline__ __device__ uint64_t ROTR(const uint64_t value, const int offset) {
     uint64_t result;
+#if __CUDA_ARCH__ >= 320
     if(offset < 32) {
 		asm("{\n\t"
 		" .reg .u32 tl,th,vl,vh; \n\t"
@@ -106,6 +107,9 @@ __forceinline__ __device__ uint64_t ROTR(const uint64_t value, const int offset)
 		"}"
 		: "=l"(result) : "l"(value) , "r"(offset));
     }
+#else
+    result = (value >> offset) | (value << (64-offset));
+#endif
     return  result;
 }
 

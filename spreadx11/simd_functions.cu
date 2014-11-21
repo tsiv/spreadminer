@@ -1175,8 +1175,11 @@ __device__  void Round8_3_final(uint32_t *A,
 	STEP8_MAJ_31(d_cw3[7], u, r, &A[8], &A[16], &A[24], A);
 }
 
+#if __CUDA_ARCH__ >= 350
 #define expanded_vector(x) __ldg(&g_fft4[x])
-
+#else
+#define expanded_vector(x) tex1Dfetch(texRef1D_128, (x))
+#endif
 __device__  void Round8_0(uint32_t *A, const int thr_offset,
 		int r, int s, int t, int u, uint4 *g_fft4) {
 	uint32_t w[8];

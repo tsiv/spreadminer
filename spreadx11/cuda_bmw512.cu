@@ -25,16 +25,31 @@ __constant__ uint64_t c_PaddedMessage80[16]; // padded message (80 bytes + paddi
 
 #define SPH_C64(x)    ((uint64_t)(x ## ULL))
 
-__forceinline__ __device__ uint64_t ROTL64S(const uint64_t value, const int offset) {
+__forceinline__ __device__ uint64_t ROTL64(const uint64_t value, const int offset) {
     uint64_t result;
-    asm("{\n\t"
-    " .reg .u32 tl,th,vl,vh; \n\t"
-    "mov.b64 {tl,th},%1; \n\t"
-    "shf.l.wrap.b32 vh,tl,th,%2; \n\t"
-    "shf.l.wrap.b32 vl,th,tl,%2; \n\t"
-    "mov.b64 %0,{vl,vh}; \n\t"
-    "}"
-    : "=l"(result) : "l"(value) , "r"(offset));
+#if __CUDA_ARCH__ >= 320
+    if(offset >= 32) {
+		asm("{\n\t"
+		" .reg .u32 tl,th,vl,vh; \n\t"
+		"mov.b64 {tl,th},%1; \n\t"
+		"shf.l.wrap.b32 vl,tl,th,%2; \n\t"
+		"shf.l.wrap.b32 vh,th,tl,%2; \n\t"
+		"mov.b64 %0,{vl,vh}; \n\t"
+		"}"
+		: "=l"(result) : "l"(value) , "r"(offset));
+    } else {
+		asm("{\n\t"
+		" .reg .u32 tl,th,vl,vh; \n\t"
+		"mov.b64 {tl,th},%1; \n\t"
+		"shf.l.wrap.b32 vh,tl,th,%2; \n\t"
+		"shf.l.wrap.b32 vl,th,tl,%2; \n\t"
+		"mov.b64 %0,{vl,vh}; \n\t"
+		"}"
+		: "=l"(result) : "l"(value) , "r"(offset));
+    }
+#else
+    result = (value << offset) | (value >> (64-offset));
+#endif
     return  result;
 }
 
@@ -46,19 +61,6 @@ __forceinline__ __device__ uint64_t ROTL64_32(const uint64_t value) {
     "mov.b64 %0,{th,tl}; \n\t"
     "}"
     : "=l"(result) : "l"(value));
-    return  result;
-}
-
-__forceinline__ __device__ uint64_t ROTL64B(const uint64_t value, const int offset) {
-    uint64_t result;
-    asm("{\n\t"
-    " .reg .u32 tl,th,vl,vh; \n\t"
-    "mov.b64 {tl,th},%1; \n\t"
-    "shf.l.wrap.b32 vl,tl,th,%2; \n\t"
-    "shf.l.wrap.b32 vh,th,tl,%2; \n\t"
-    "mov.b64 %0,{vl,vh}; \n\t"
-    "}"
-    : "=l"(result) : "l"(value) , "r"(offset));
     return  result;
 }
 
@@ -100,10 +102,10 @@ static const uint64_t h_final[16] = {
 #define SHL(x, n)            ((x) << (n))
 #define SHR(x, n)            ((x) >> (n))
 
-#define CONST_EXP2    q[i+0] + ROTL64S(q[i+1], 5)  + q[i+2] + ROTL64S(q[i+3], 11) + \
-                    q[i+4] + ROTL64S(q[i+5], 27) + q[i+6] + ROTL64_32(q[i+7]) + \
-                    q[i+8] + ROTL64B(q[i+9], 37) + q[i+10] + ROTL64B(q[i+11], 43) + \
-                    q[i+12] + ROTL64B(q[i+13], 53) + (SHR(q[i+14],1) ^ q[i+14]) + (SHR(q[i+15],2) ^ q[i+15])
+#define CONST_EXP2    q[i+0] + ROTL64(q[i+1], 5)  + q[i+2] + ROTL64(q[i+3], 11) + \
+                    q[i+4] + ROTL64(q[i+5], 27) + q[i+6] + ROTL64_32(q[i+7]) + \
+                    q[i+8] + ROTL64(q[i+9], 37) + q[i+10] + ROTL64(q[i+11], 43) + \
+                    q[i+12] + ROTL64(q[i+13], 53) + (SHR(q[i+14],1) ^ q[i+14]) + (SHR(q[i+15],2) ^ q[i+15])
 
 __device__ void Compression512(uint64_t *msg, uint64_t *hash)
 {
@@ -128,70 +130,70 @@ __device__ void Compression512(uint64_t *msg, uint64_t *hash)
     tmp[14] = (msg[ 3] ^ hash[ 3]) - (msg[ 5] ^ hash[ 5]) + (msg[ 8] ^ hash[ 8]) - (msg[11] ^ hash[11]) - (msg[12] ^ hash[12]);
     tmp[15] = (msg[12] ^ hash[12]) - (msg[ 4] ^ hash[ 4]) - (msg[ 6] ^ hash[ 6]) - (msg[ 9] ^ hash[ 9]) + (msg[13] ^ hash[13]);
     
-    q[0] = (SHR(tmp[0], 1) ^ SHL(tmp[0], 3) ^ ROTL64S(tmp[0],  4) ^ ROTL64B(tmp[0], 37)) + hash[1];
-    q[1] = (SHR(tmp[1], 1) ^ SHL(tmp[1], 2) ^ ROTL64S(tmp[1], 13) ^ ROTL64B(tmp[1], 43)) + hash[2];
-    q[2] = (SHR(tmp[2], 2) ^ SHL(tmp[2], 1) ^ ROTL64S(tmp[2], 19) ^ ROTL64B(tmp[2], 53)) + hash[3];
-    q[3] = (SHR(tmp[3], 2) ^ SHL(tmp[3], 2) ^ ROTL64S(tmp[3], 28) ^ ROTL64B(tmp[3], 59)) + hash[4];
+    q[0] = (SHR(tmp[0], 1) ^ SHL(tmp[0], 3) ^ ROTL64(tmp[0],  4) ^ ROTL64(tmp[0], 37)) + hash[1];
+    q[1] = (SHR(tmp[1], 1) ^ SHL(tmp[1], 2) ^ ROTL64(tmp[1], 13) ^ ROTL64(tmp[1], 43)) + hash[2];
+    q[2] = (SHR(tmp[2], 2) ^ SHL(tmp[2], 1) ^ ROTL64(tmp[2], 19) ^ ROTL64(tmp[2], 53)) + hash[3];
+    q[3] = (SHR(tmp[3], 2) ^ SHL(tmp[3], 2) ^ ROTL64(tmp[3], 28) ^ ROTL64(tmp[3], 59)) + hash[4];
     q[4] = (SHR(tmp[4], 1) ^ tmp[4]) + hash[5];
-    q[5] = (SHR(tmp[5], 1) ^ SHL(tmp[5], 3) ^ ROTL64S(tmp[5],  4) ^ ROTL64B(tmp[5], 37)) + hash[6];
-    q[6] = (SHR(tmp[6], 1) ^ SHL(tmp[6], 2) ^ ROTL64S(tmp[6], 13) ^ ROTL64B(tmp[6], 43)) + hash[7];
-    q[7] = (SHR(tmp[7], 2) ^ SHL(tmp[7], 1) ^ ROTL64S(tmp[7], 19) ^ ROTL64B(tmp[7], 53)) + hash[8];
-    q[8] = (SHR(tmp[8], 2) ^ SHL(tmp[8], 2) ^ ROTL64S(tmp[8], 28) ^ ROTL64B(tmp[8], 59)) + hash[9];
+    q[5] = (SHR(tmp[5], 1) ^ SHL(tmp[5], 3) ^ ROTL64(tmp[5],  4) ^ ROTL64(tmp[5], 37)) + hash[6];
+    q[6] = (SHR(tmp[6], 1) ^ SHL(tmp[6], 2) ^ ROTL64(tmp[6], 13) ^ ROTL64(tmp[6], 43)) + hash[7];
+    q[7] = (SHR(tmp[7], 2) ^ SHL(tmp[7], 1) ^ ROTL64(tmp[7], 19) ^ ROTL64(tmp[7], 53)) + hash[8];
+    q[8] = (SHR(tmp[8], 2) ^ SHL(tmp[8], 2) ^ ROTL64(tmp[8], 28) ^ ROTL64(tmp[8], 59)) + hash[9];
     q[9] = (SHR(tmp[9], 1) ^ tmp[9]) + hash[10];
-    q[10] = (SHR(tmp[10], 1) ^ SHL(tmp[10], 3) ^ ROTL64S(tmp[10],  4) ^ ROTL64B(tmp[10], 37)) + hash[11];
-    q[11] = (SHR(tmp[11], 1) ^ SHL(tmp[11], 2) ^ ROTL64S(tmp[11], 13) ^ ROTL64B(tmp[11], 43)) + hash[12];
-    q[12] = (SHR(tmp[12], 2) ^ SHL(tmp[12], 1) ^ ROTL64S(tmp[12], 19) ^ ROTL64B(tmp[12], 53)) + hash[13];
-    q[13] = (SHR(tmp[13], 2) ^ SHL(tmp[13], 2) ^ ROTL64S(tmp[13], 28) ^ ROTL64B(tmp[13], 59)) + hash[14];
+    q[10] = (SHR(tmp[10], 1) ^ SHL(tmp[10], 3) ^ ROTL64(tmp[10],  4) ^ ROTL64(tmp[10], 37)) + hash[11];
+    q[11] = (SHR(tmp[11], 1) ^ SHL(tmp[11], 2) ^ ROTL64(tmp[11], 13) ^ ROTL64(tmp[11], 43)) + hash[12];
+    q[12] = (SHR(tmp[12], 2) ^ SHL(tmp[12], 1) ^ ROTL64(tmp[12], 19) ^ ROTL64(tmp[12], 53)) + hash[13];
+    q[13] = (SHR(tmp[13], 2) ^ SHL(tmp[13], 2) ^ ROTL64(tmp[13], 28) ^ ROTL64(tmp[13], 59)) + hash[14];
     q[14] = (SHR(tmp[14], 1) ^ tmp[14]) + hash[15];
-    q[15] = (SHR(tmp[15], 1) ^ SHL(tmp[15], 3) ^ ROTL64S(tmp[15], 4) ^ ROTL64B(tmp[15], 37)) + hash[0];
+    q[15] = (SHR(tmp[15], 1) ^ SHL(tmp[15], 3) ^ ROTL64(tmp[15], 4) ^ ROTL64(tmp[15], 37)) + hash[0];
 
     // Expand 1
     for(int i=0;i<2;i++)
     {
         q[i+16] =
-        (SHR(q[i], 1) ^ SHL(q[i], 2) ^ ROTL64S(q[i], 13) ^ ROTL64B(q[i], 43)) +
-        (SHR(q[i+1], 2) ^ SHL(q[i+1], 1) ^ ROTL64S(q[i+1], 19) ^ ROTL64B(q[i+1], 53)) +
-        (SHR(q[i+2], 2) ^ SHL(q[i+2], 2) ^ ROTL64S(q[i+2], 28) ^ ROTL64B(q[i+2], 59)) +
-        (SHR(q[i+3], 1) ^ SHL(q[i+3], 3) ^ ROTL64S(q[i+3],  4) ^ ROTL64B(q[i+3], 37)) +
-        (SHR(q[i+4], 1) ^ SHL(q[i+4], 2) ^ ROTL64S(q[i+4], 13) ^ ROTL64B(q[i+4], 43)) +
-        (SHR(q[i+5], 2) ^ SHL(q[i+5], 1) ^ ROTL64S(q[i+5], 19) ^ ROTL64B(q[i+5], 53)) +
-        (SHR(q[i+6], 2) ^ SHL(q[i+6], 2) ^ ROTL64S(q[i+6], 28) ^ ROTL64B(q[i+6], 59)) +
-        (SHR(q[i+7], 1) ^ SHL(q[i+7], 3) ^ ROTL64S(q[i+7],  4) ^ ROTL64B(q[i+7], 37)) +
-        (SHR(q[i+8], 1) ^ SHL(q[i+8], 2) ^ ROTL64S(q[i+8], 13) ^ ROTL64B(q[i+8], 43)) +
-        (SHR(q[i+9], 2) ^ SHL(q[i+9], 1) ^ ROTL64S(q[i+9], 19) ^ ROTL64B(q[i+9], 53)) +
-        (SHR(q[i+10], 2) ^ SHL(q[i+10], 2) ^ ROTL64S(q[i+10], 28) ^ ROTL64B(q[i+10], 59)) +
-        (SHR(q[i+11], 1) ^ SHL(q[i+11], 3) ^ ROTL64S(q[i+11],  4) ^ ROTL64B(q[i+11], 37)) +
-        (SHR(q[i+12], 1) ^ SHL(q[i+12], 2) ^ ROTL64S(q[i+12], 13) ^ ROTL64B(q[i+12], 43)) +
-        (SHR(q[i+13], 2) ^ SHL(q[i+13], 1) ^ ROTL64S(q[i+13], 19) ^ ROTL64B(q[i+13], 53)) +
-        (SHR(q[i+14], 2) ^ SHL(q[i+14], 2) ^ ROTL64S(q[i+14], 28) ^ ROTL64B(q[i+14], 59)) +
-        (SHR(q[i+15], 1) ^ SHL(q[i+15], 3) ^ ROTL64S(q[i+15],  4) ^ ROTL64B(q[i+15], 37)) +
-        ((    d_x55[i] + ROTL64S(msg[i], i+1) +
-            ROTL64S(msg[i+3], i+4) - ROTL64S(msg[i+10], i+11) ) ^ hash[i+7]);
+        (SHR(q[i], 1) ^ SHL(q[i], 2) ^ ROTL64(q[i], 13) ^ ROTL64(q[i], 43)) +
+        (SHR(q[i+1], 2) ^ SHL(q[i+1], 1) ^ ROTL64(q[i+1], 19) ^ ROTL64(q[i+1], 53)) +
+        (SHR(q[i+2], 2) ^ SHL(q[i+2], 2) ^ ROTL64(q[i+2], 28) ^ ROTL64(q[i+2], 59)) +
+        (SHR(q[i+3], 1) ^ SHL(q[i+3], 3) ^ ROTL64(q[i+3],  4) ^ ROTL64(q[i+3], 37)) +
+        (SHR(q[i+4], 1) ^ SHL(q[i+4], 2) ^ ROTL64(q[i+4], 13) ^ ROTL64(q[i+4], 43)) +
+        (SHR(q[i+5], 2) ^ SHL(q[i+5], 1) ^ ROTL64(q[i+5], 19) ^ ROTL64(q[i+5], 53)) +
+        (SHR(q[i+6], 2) ^ SHL(q[i+6], 2) ^ ROTL64(q[i+6], 28) ^ ROTL64(q[i+6], 59)) +
+        (SHR(q[i+7], 1) ^ SHL(q[i+7], 3) ^ ROTL64(q[i+7],  4) ^ ROTL64(q[i+7], 37)) +
+        (SHR(q[i+8], 1) ^ SHL(q[i+8], 2) ^ ROTL64(q[i+8], 13) ^ ROTL64(q[i+8], 43)) +
+        (SHR(q[i+9], 2) ^ SHL(q[i+9], 1) ^ ROTL64(q[i+9], 19) ^ ROTL64(q[i+9], 53)) +
+        (SHR(q[i+10], 2) ^ SHL(q[i+10], 2) ^ ROTL64(q[i+10], 28) ^ ROTL64(q[i+10], 59)) +
+        (SHR(q[i+11], 1) ^ SHL(q[i+11], 3) ^ ROTL64(q[i+11],  4) ^ ROTL64(q[i+11], 37)) +
+        (SHR(q[i+12], 1) ^ SHL(q[i+12], 2) ^ ROTL64(q[i+12], 13) ^ ROTL64(q[i+12], 43)) +
+        (SHR(q[i+13], 2) ^ SHL(q[i+13], 1) ^ ROTL64(q[i+13], 19) ^ ROTL64(q[i+13], 53)) +
+        (SHR(q[i+14], 2) ^ SHL(q[i+14], 2) ^ ROTL64(q[i+14], 28) ^ ROTL64(q[i+14], 59)) +
+        (SHR(q[i+15], 1) ^ SHL(q[i+15], 3) ^ ROTL64(q[i+15],  4) ^ ROTL64(q[i+15], 37)) +
+        ((    d_x55[i] + ROTL64(msg[i], i+1) +
+            ROTL64(msg[i+3], i+4) - ROTL64(msg[i+10], i+11) ) ^ hash[i+7]);
     }
 
 #pragma unroll 4
     for(int i=2;i<6;i++) {
         q[i+16] = CONST_EXP2 + 
-        ((    d_x55[i] + ROTL64S(msg[i], i+1) +
-            ROTL64S(msg[i+3], i+4) - ROTL64S(msg[i+10], i+11) ) ^ hash[i+7]);
+        ((    d_x55[i] + ROTL64(msg[i], i+1) +
+            ROTL64(msg[i+3], i+4) - ROTL64(msg[i+10], i+11) ) ^ hash[i+7]);
     }
 #pragma unroll 3
     for(int i=6;i<9;i++) {
         q[i+16] = CONST_EXP2 + 
-        ((    d_x55[i] + ROTL64S(msg[i], i+1) +
-            ROTL64S(msg[i+3], i+4) - ROTL64S(msg[i-6], i-5) ) ^ hash[i+7]);
+        ((    d_x55[i] + ROTL64(msg[i], i+1) +
+            ROTL64(msg[i+3], i+4) - ROTL64(msg[i-6], i-5) ) ^ hash[i+7]);
     }
 #pragma unroll 4
     for(int i=9;i<13;i++) {
         q[i+16] = CONST_EXP2 + 
-        ((    d_x55[i] + ROTL64S(msg[i], i+1) +
-            ROTL64S(msg[i+3], i+4) - ROTL64S(msg[i-6], i-5) ) ^ hash[i-9]);
+        ((    d_x55[i] + ROTL64(msg[i], i+1) +
+            ROTL64(msg[i+3], i+4) - ROTL64(msg[i-6], i-5) ) ^ hash[i-9]);
     }
 #pragma unroll 3
     for(int i=13;i<16;i++) {
         q[i+16] = CONST_EXP2 + 
-        ((    d_x55[i] + ROTL64S(msg[i], i+1) +
-            ROTL64S(msg[i-13], i-12) - ROTL64S(msg[i-6], i-5) ) ^ hash[i-9]);
+        ((    d_x55[i] + ROTL64(msg[i], i+1) +
+            ROTL64(msg[i-13], i-12) - ROTL64(msg[i-6], i-5) ) ^ hash[i-9]);
     }
 
     uint64_t XL64 = q[16]^q[17]^q[18]^q[19]^q[20]^q[21]^q[22]^q[23];
@@ -206,14 +208,14 @@ __device__ void Compression512(uint64_t *msg, uint64_t *hash)
     hash[6] =                       (SHR(XH64, 4) ^ SHL(q[22],6) ^ msg[ 6]) + (    XL64    ^ q[30] ^ q[ 6]);
     hash[7] =                       (SHR(XH64,11) ^ SHL(q[23],2) ^ msg[ 7]) + (    XL64    ^ q[31] ^ q[ 7]);
 
-    hash[ 8] = ROTL64S(hash[4], 9) + (    XH64     ^     q[24]    ^ msg[ 8]) + (SHL(XL64,8) ^ q[23] ^ q[ 8]);
-    hash[ 9] = ROTL64S(hash[5],10) + (    XH64     ^     q[25]    ^ msg[ 9]) + (SHR(XL64,6) ^ q[16] ^ q[ 9]);
-    hash[10] = ROTL64S(hash[6],11) + (    XH64     ^     q[26]    ^ msg[10]) + (SHL(XL64,6) ^ q[17] ^ q[10]);
-    hash[11] = ROTL64S(hash[7],12) + (    XH64     ^     q[27]    ^ msg[11]) + (SHL(XL64,4) ^ q[18] ^ q[11]);
-    hash[12] = ROTL64S(hash[0],13) + (    XH64     ^     q[28]    ^ msg[12]) + (SHR(XL64,3) ^ q[19] ^ q[12]);
-    hash[13] = ROTL64S(hash[1],14) + (    XH64     ^     q[29]    ^ msg[13]) + (SHR(XL64,4) ^ q[20] ^ q[13]);
-    hash[14] = ROTL64S(hash[2],15) + (    XH64     ^     q[30]    ^ msg[14]) + (SHR(XL64,7) ^ q[21] ^ q[14]);
-    hash[15] = ROTL64S(hash[3],16) + (    XH64     ^     q[31]    ^ msg[15]) + (SHR(XL64,2) ^ q[22] ^ q[15]);
+    hash[ 8] = ROTL64(hash[4], 9) + (    XH64     ^     q[24]    ^ msg[ 8]) + (SHL(XL64,8) ^ q[23] ^ q[ 8]);
+    hash[ 9] = ROTL64(hash[5],10) + (    XH64     ^     q[25]    ^ msg[ 9]) + (SHR(XL64,6) ^ q[16] ^ q[ 9]);
+    hash[10] = ROTL64(hash[6],11) + (    XH64     ^     q[26]    ^ msg[10]) + (SHL(XL64,6) ^ q[17] ^ q[10]);
+    hash[11] = ROTL64(hash[7],12) + (    XH64     ^     q[27]    ^ msg[11]) + (SHL(XL64,4) ^ q[18] ^ q[11]);
+    hash[12] = ROTL64(hash[0],13) + (    XH64     ^     q[28]    ^ msg[12]) + (SHR(XL64,3) ^ q[19] ^ q[12]);
+    hash[13] = ROTL64(hash[1],14) + (    XH64     ^     q[29]    ^ msg[13]) + (SHR(XL64,4) ^ q[20] ^ q[13]);
+    hash[14] = ROTL64(hash[2],15) + (    XH64     ^     q[30]    ^ msg[14]) + (SHR(XL64,7) ^ q[21] ^ q[14]);
+    hash[15] = ROTL64(hash[3],16) + (    XH64     ^     q[31]    ^ msg[15]) + (SHR(XL64,2) ^ q[22] ^ q[15]);
 }
 
 __global__ void quark_bmw512_gpu_hash_64(int threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *g_nonceVector)

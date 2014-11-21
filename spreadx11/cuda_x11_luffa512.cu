@@ -36,7 +36,14 @@ static __device__ __forceinline__ uint32_t BYTES_SWAP32(uint32_t x)
 	return __byte_perm(x, x, 0x0123);
 }
 
-#define ROTL32(x, n) (__funnelshift_l((x), (x), (n)))
+static __device__ __forceinline__ uint32_t ROTL32( uint32_t x, const int n )
+{
+#if __CUDA_ARCH__ >= 320
+    return __funnelshift_l(x, x, n);
+#else
+    return (x << n) | (x >> (32-n));
+#endif
+}
 
 #define MULT2(a,j)\
     tmp = a[7+((j<<3))];\
