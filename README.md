@@ -3,9 +3,14 @@ spreadminer
 
 SpreadX11 miner based on Christian Buchner's &amp; Christian H.'s project ccminer.
 
+Will code GPU miners for dust aka Donation addresses
+====================================================
+ * BTC: 1QD25HSCF8EAxUTYj2XsXZNGBi7RvQ21p8 [Yay, I'm BTC rich](https://blockchain.info/address/1QD25HSCF8EAxUTYj2XsXZNGBi7RvQ21p8)
+ * SPR: SfSEcVQGhbXvPQ2hkTj3vxSd9PEZA12efa [Yay, I'm SPR rich](http://spreadcoin.net/explorer/index.php?q=SfSEcVQGhbXvPQ2hkTj3vxSd9PEZA12efa)
+
 Requirements
 ============
- * GPU with compute capability 3.2+
+ * GPU with compute capability 3.0+
 
 Dependencies
 ============
@@ -23,12 +28,12 @@ Build
 #### Linux
  * edit the NVCC_GENCODE line in Makefile.am to target your preferred compute capability
  * ./autogen.sh
- * ./configure CFLAGS="-O3"
+ * ./configure "CFLAGS=-O3" "CXXFLAGS=-O3"
  * make
 
 #### Windows
  * Go to http://cudamining.co.uk/url/tutorials/id/3 and follow the instructions
- * Pray that it works
+ * Pray that it works and that you don't go crazy trying to scrape together the dependencies
 
 Usage
 =====
