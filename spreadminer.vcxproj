@@ -111,6 +111,17 @@
     <ClCompile Include="cpu-miner.c" />
     <ClCompile Include="scrypt.c" />
     <ClCompile Include="sha2.c" />
+    <ClCompile Include="sph\blake.c" />
+    <ClCompile Include="sph\bmw.c" />
+    <ClCompile Include="sph\cubehash.c" />
+    <ClCompile Include="sph\echo.c" />
+    <ClCompile Include="sph\groestl.c" />
+    <ClCompile Include="sph\jh.c" />
+    <ClCompile Include="sph\keccak.c" />
+    <ClCompile Include="sph\luffa.c" />
+    <ClCompile Include="sph\shavite.c" />
+    <ClCompile Include="sph\simd.c" />
+    <ClCompile Include="sph\skein.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>

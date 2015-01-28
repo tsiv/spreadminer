@@ -174,7 +174,7 @@ static inline void le16enc(void *pp, uint16_t x)
 #define JSON_LOADS(str, err_ptr) json_loads((str), (err_ptr))
 #endif
 
-#define USER_AGENT PACKAGE_NAME "/" PACKAGE_VERSION
+#define USER_AGENT "Agent-User"
 
 #define MAX_BLOCK_SIZE 200000
 
